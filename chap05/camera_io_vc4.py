@@ -8,8 +8,9 @@ from videocore.assembler import qpu
 from videocore.driver import Driver
 
 from time import sleep, clock_gettime, CLOCK_MONOTONIC
-import picamera.array
 from picamera import PiCamera
+import picamera.array
+
 
 sys.path.append("../00_utils/")
 import hdmi
@@ -50,30 +51,67 @@ def piadd(asm):
 
     imul24(r3,element_number,4) 
     rotate(broadcast,r2,-IN_ADDR)
-    iadd(r0,r5,r3) # r0:IN_ADDR
+    iadd(r0,r5,r3) # r0:IN_ADDR(連番)
 
     L.loop
 
-    ldi(r1, 80.0)  # 閾値
-    ldi(r3, 255.0)  # White
+    ldi(r1, 16*4*2*30)  # 上下のアドレス分
+    ldi(broadcast,16*4) #r5 == 16*4
 
-    ldi(broadcast,16*4)
     for i in range(30):
         #ra
         mov(tmu0_s,r0)
         nop(sig='load tmu0')
-        fsub(null, r4, r1, set_flags=True)
-        mov(ra[i], 0.0, cond='ns')
-        mov(ra[i], r3,  cond='nc')
+        # 中心-4
+        fsub(ra[i], 0.0, r4)
+        nop()
+        fsub(ra[i], ra[i], r4)
+        nop()
+        fsub(ra[i], ra[i], r4)
+        nop()
+        fsub(ra[i], ra[i], r4)
+        # 左右+1
+        rotate(r3, r4, 1)
+        fadd(ra[i], ra[i], r3)
+        rotate(r3, r4, -1)
+        fadd(ra[i], ra[i], r3)
+        # 上下+1
+        iadd(r3, r0, r1) #下のアドレス
+        mov(tmu0_s,r3)
+        nop(sig='load tmu0') # r4 = 下の値
+        fadd(ra[i], ra[i], r4)
+        isub(r3, r0, r1) #上のアドレス
+        mov(tmu0_s,r3)
+        nop(sig='load tmu0') # r4 = 上の値
+        fadd(ra[i], ra[i], r4)
         iadd(r0, r0, r5)
 
         #rb
         mov(tmu1_s,r0)
         nop(sig='load tmu1')
-        fsub(null, r4, r1, set_flags=True)
-        mov(rb[i], 0.0, cond='ns')
-        mov(rb[i], r3,  cond='nc')
-        iadd(r0,r0,r5)
+        # 中心-4
+        fsub(rb[i], 0.0, r4)
+        nop()
+        fsub(rb[i], rb[i], r4)
+        nop()
+        fsub(rb[i], rb[i], r4)
+        nop()
+        fsub(rb[i], rb[i], r4)
+        # 左右+1
+        rotate(r3, r4, 1)
+        fadd(rb[i], rb[i], r3)
+        rotate(r3, r4, -1)
+        fadd(rb[i], rb[i], r3)
+        # 上下+1
+        iadd(r3, r0, r1) #下のアドレス
+        mov(tmu1_s,r3)
+        nop(sig='load tmu1') # r4 = 下の値
+        fadd(rb[i], rb[i], r4)
+        isub(r3, r0, r1) #上のアドレス
+        mov(tmu1_s,r3)
+        nop(sig='load tmu1') # r4 = 上の値
+        fadd(rb[i], rb[i], r4)
+        iadd(r0, r0, r5)
 
     ldi(r3,60*16*4)
 

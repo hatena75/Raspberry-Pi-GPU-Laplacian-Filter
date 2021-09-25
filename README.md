@@ -1,3 +1,4 @@
-Raspberry Pi GPGPU入門
+Raspberry Pi GPGPU ラプラシアンフィルタ
 ==
-本リポジトリは技術書典7に販売される「Raspberry Pi GPGPU入門」のサポートサイトです。
+本リポジトリは技術書典7に販売される「Raspberry Pi GPGPU入門」を参考にした(雑な)ラプラシアンフィルタ実装です。
+セキュリティネクストキャンプ2021 低レベルGPUプログラミングの成果物でもあります。
